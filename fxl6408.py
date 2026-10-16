@@ -254,6 +254,29 @@ class FXL6408:
         self._int_mask |= m
         self._write(_REG_INT_MASK, self._int_mask)
 
+    def set_interrupt_defaults(self, value, mask=0xFF):
+        """Set the reference level of every pin in `mask` at once.
+
+        INT only asserts when an input moves *away* from its reference
+        level. To hear about every edge (press and release), call this
+        with the levels just read whenever the interrupt is serviced:
+
+            flags = io.read_interrupts()
+            levels = io.read_port()
+            io.set_interrupt_defaults(levels, watched_pins_mask)
+        """
+        mask &= 0xFF
+        self._in_default = (self._in_default & ~mask) | (value & mask)
+        self._write(_REG_IN_DEFAULT, self._in_default)
+
+    def interrupt_mask(self, mask=None):
+        """Get or set the whole interrupt mask register (1 = masked)."""
+        if mask is None:
+            return self._int_mask
+        self._int_mask = mask & 0xFF
+        self._write(_REG_INT_MASK, self._int_mask)
+        return self._int_mask
+
     def read_interrupts(self):
         """Return the interrupt-status bitmask. Reading clears the INT line."""
         return self._read(_REG_INT_STATUS)
